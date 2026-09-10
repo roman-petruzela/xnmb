@@ -218,6 +218,8 @@
     "bt_audio_device_unpair_start": "Unpairing audio device...",
     "bt_audio_device_unpair_error": "An error ocurred while unpairing the audio device",
     "set_ul_launch_hb_app_by_default": "Launch homebrew as applications by default",
+    "set_ul_rescan_roms": "Rescan ROM library",
+    "set_ul_rescan_roms_done": "ROM library scan complete, new entries added",
     "theme_outdated": "The theme is outdated. It should work correctly, but some aspects might cause issues.",
     "theme_active": "Active theme",
     "app_no_contents": "This application has no contents, it cannot be launched.",

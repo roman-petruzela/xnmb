@@ -60,6 +60,7 @@ namespace ul::menu::ui {
         BluetoothAudioPaired,
         BluetoothAudioDiscover,
         LaunchHomebrewApplicationByDefault,
+        RescanRomLibrary,
     };
 
     class SettingsMenuLayout : public IMenuLayout {

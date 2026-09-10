@@ -1,0 +1,23 @@
+{
+  "_comment": "Copy this file to sdmc:/ulaunch/roms_config.json on your SD card and edit the paths below. Each RetroArch core on Switch is its own standalone .nro (there is no shared retroarch_switch.nro that takes a core as an argument) - core_nro must point at that core-specific build, e.g. snes9x2005_libnx.nro.",
+  "systems": [
+    {
+      "name": "SNES",
+      "core_nro": "sdmc:/retroarch/cores/snes9x2005_libnx.nro",
+      "extensions": ["sfc", "smc"],
+      "rom_dirs": ["sdmc:/roms/snes"]
+    },
+    {
+      "name": "NES",
+      "core_nro": "sdmc:/retroarch/cores/fceumm_libnx.nro",
+      "extensions": ["nes"],
+      "rom_dirs": ["sdmc:/roms/nes"]
+    },
+    {
+      "name": "GBA",
+      "core_nro": "sdmc:/retroarch/cores/mgba_libnx.nro",
+      "extensions": ["gba"],
+      "rom_dirs": ["sdmc:/roms/gba"]
+    }
+  ]
+}

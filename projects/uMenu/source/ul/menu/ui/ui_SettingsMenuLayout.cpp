@@ -1,5 +1,7 @@
 #include <ul/menu/ui/ui_SettingsMenuLayout.hpp>
 #include <ul/menu/ui/ui_MenuApplication.hpp>
+#include <ul/menu/menu_Entries.hpp>
+#include <ul/menu/rom/rom_Scanner.hpp>
 #include <ul/fs/fs_Stdio.hpp>
 #include <ul/net/net_Service.hpp>
 #include <ul/acc/acc_Accounts.hpp>
@@ -783,6 +785,24 @@ namespace ul::menu::ui {
                     bool launch_hb_app_by_default;
                     UL_ASSERT_TRUE(g_GlobalSettings.config.GetEntry(cfg::ConfigEntryId::LaunchHomebrewApplicationByDefault, launch_hb_app_by_default));
                     UL_ASSERT_TRUE(g_GlobalSettings.config.SetEntry(cfg::ConfigEntryId::LaunchHomebrewApplicationByDefault, !launch_hb_app_by_default));
+                    return SettingResult::Changed;
+                }
+            });
+
+            g_SettingMenuEntries.push_back({
+                .menu = SettingMenu::uLaunch,
+                .setting = Setting::RescanRomLibrary,
+                .editable = true,
+                .static_description = GetLanguageString("set_ul_rescan_roms"),
+                .select_cb = [](SettingSubmenu&) {
+                    const auto scan_result = rom::ScanRoms(GetActiveMenuPath());
+                    if(scan_result.HasErrors()) {
+                        g_MenuApplication->DisplayDialog(GetLanguageString("set_ul_rescan_roms"), scan_result.errors.front(), { GetLanguageString("ok") }, true);
+                    }
+                    else {
+                        const auto msg = GetLanguageString("set_ul_rescan_roms_done") + " (" + std::to_string(scan_result.new_entries_added) + ")";
+                        g_MenuApplication->ShowNotification(msg);
+                    }
                     return SettingResult::Changed;
                 }
             });
