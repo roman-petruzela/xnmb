@@ -46,6 +46,10 @@
             "y": 166,
             "h_align": "center"
         },
+        "category_bar": {
+            "x": 736,
+            "y": 180
+        },
         "cur_path_text": {
             "y": 36,
             "h_align": "center",

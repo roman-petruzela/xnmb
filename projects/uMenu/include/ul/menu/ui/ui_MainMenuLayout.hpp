@@ -10,6 +10,7 @@
 #include <ul/menu/ui/ui_Common.hpp>
 #include <ul/menu/menu_Entries.hpp>
 #include <ul/cfg/cfg_Config.hpp>
+#include <array>
 
 namespace ul::menu::ui {
 
@@ -19,6 +20,15 @@ namespace ul::menu::ui {
             static constexpr s64 MessagesWaitTimeSeconds = 1;
             static constexpr s64 TimeDotsDisplayChangeWaitTimeSeconds = 1;
             static constexpr u32 LogoSize = 90;
+
+            // PSP XMB-style category bar (Games / Themes / Settings / Controllers / Album / User),
+            // cycled with ZL/ZR. Games stays on this same layout, the rest jump to uLaunch's
+            // already-existing dedicated screens (see ChangeCategory).
+            static constexpr u32 CategoryCount = 6;
+            static constexpr u32 UserCategoryIndex = 5;
+            static constexpr u32 CategoryBarIconSize = 48;
+            static constexpr u32 CategoryBarIconSpacing = 32;
+            static constexpr u32 CategoryBarSelectedOverPadding = 8;
 
         private:
             bool last_quick_menu_on;
@@ -37,6 +47,9 @@ namespace ul::menu::ui {
             pu::ui::elm::Image::Ref entry_menu_bg;
             pu::ui::elm::Image::Ref entry_menu_left_icon;
             pu::ui::elm::Image::Ref entry_menu_right_icon;
+            std::array<pu::ui::elm::Image::Ref, CategoryCount> category_bar_icons;
+            pu::ui::elm::Image::Ref category_bar_selected_over;
+            u32 cur_category_idx;
             std::string cur_folder_path;
             pu::ui::elm::TextBlock::Ref cur_path_text;
             pu::ui::elm::TextBlock::Ref cur_entry_main_text;
@@ -84,6 +97,9 @@ namespace ul::menu::ui {
             void DoMoveTo(const std::string &new_path);
             void menu_EntryInputPressed(const u64 keys_down);
             void menu_FocusedEntryChanged(const bool has_prev_entry, const bool is_prev_entry_suspended, const bool is_cur_entry_suspended);
+
+            void UpdateCategoryBarSelection();
+            void ChangeCategory(const s32 direction);
 
             inline void PushFolder(const std::string &name) {
                 this->cur_folder_path = fs::JoinPath(this->cur_folder_path, name);

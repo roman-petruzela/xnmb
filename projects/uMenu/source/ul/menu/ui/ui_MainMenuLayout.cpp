@@ -500,6 +500,14 @@ namespace ul::menu::ui {
                 pu::audio::PlaySfx(this->page_move_sfx);
             }
         }
+        // Note: HidNpadButton_ZL | HidNpadButton_ZR together is the quick menu shortcut (see
+        // AddSetInput below), so only act on ZL/ZR here when the other one isn't also held.
+        else if((keys_down & HidNpadButton_ZL) && !(keys_held & HidNpadButton_ZR)) {
+            this->ChangeCategory(-1);
+        }
+        else if((keys_down & HidNpadButton_ZR) && !(keys_held & HidNpadButton_ZL)) {
+            this->ChangeCategory(1);
+        }
     }
 
     void MainMenuLayout::menu_FocusedEntryChanged(const bool has_prev_entry, const bool is_prev_entry_suspended, const bool is_cur_entry_suspended) {
@@ -757,6 +765,44 @@ namespace ul::menu::ui {
         g_GlobalSettings.ApplyConfigForElement("main_menu", "entry_menu_right_icon", this->entry_menu_right_icon);
         this->Add(this->entry_menu_right_icon);
 
+        // PSP XMB-style category bar: Games (this same screen) + the screens uLaunch already
+        // has for Themes/Settings/Controllers/Album/User, cycled with ZL/ZR.
+        this->cur_category_idx = 0;
+        static constexpr const char *CategoryIconPaths[CategoryCount] = {
+            "ui/Main/EntryIcon/DefaultApplication",
+            "ui/Main/QuickIcon/Themes",
+            "ui/Main/QuickIcon/Settings",
+            "ui/Main/QuickIcon/Controllers",
+            "ui/Main/QuickIcon/Album",
+            "ui/Main/QuickIcon/Controllers" // User: placeholder, replaced with the account icon in Reload()
+        };
+        this->category_bar_selected_over = pu::ui::elm::Image::New(0, 0, TryFindLoadImageHandle("ui/Main/OverIcon/Selected"));
+        this->category_bar_selected_over->SetWidth(CategoryBarIconSize + CategoryBarSelectedOverPadding * 2);
+        this->category_bar_selected_over->SetHeight(CategoryBarIconSize + CategoryBarSelectedOverPadding * 2);
+        this->Add(this->category_bar_selected_over);
+        for(u32 i = 0; i < CategoryCount; i++) {
+            auto icon = pu::ui::elm::Image::New(0, 0, TryFindLoadImageHandle(CategoryIconPaths[i]));
+            icon->SetWidth(CategoryBarIconSize);
+            icon->SetHeight(CategoryBarIconSize);
+            this->category_bar_icons[i] = icon;
+            this->Add(icon);
+        }
+        // Sensible default in case the active theme doesn't define "category_bar" (centered, sitting
+        // in the gap between the input bar and the entry grid - see default-theme/ui/UI.json).
+        this->category_bar_icons[0]->SetX(736);
+        this->category_bar_icons[0]->SetY(180);
+        g_GlobalSettings.ApplyConfigForElement("main_menu", "category_bar", this->category_bar_icons[0]);
+        const auto category_bar_visible = this->category_bar_icons[0]->IsVisible();
+        const auto category_bar_base_x = this->category_bar_icons[0]->GetX();
+        const auto category_bar_y = this->category_bar_icons[0]->GetY();
+        for(u32 i = 0; i < CategoryCount; i++) {
+            this->category_bar_icons[i]->SetX(category_bar_base_x + i * (CategoryBarIconSize + CategoryBarIconSpacing));
+            this->category_bar_icons[i]->SetY(category_bar_y);
+            this->category_bar_icons[i]->SetVisible(category_bar_visible);
+        }
+        this->category_bar_selected_over->SetVisible(category_bar_visible);
+        this->UpdateCategoryBarSelection();
+
         this->Add(this->cur_entry_main_text);
         this->Add(this->cur_entry_sub_text);
 
@@ -776,6 +822,49 @@ namespace ul::menu::ui {
 
         this->startup_tp = std::chrono::steady_clock::now();
         UL_LOG_INFO("MainMenuLayout created in %lld ms", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - time).count());
+    }
+
+    void MainMenuLayout::UpdateCategoryBarSelection() {
+        const auto &sel_icon = this->category_bar_icons[this->cur_category_idx];
+        this->category_bar_selected_over->SetX(sel_icon->GetX() - CategoryBarSelectedOverPadding);
+        this->category_bar_selected_over->SetY(sel_icon->GetY() - CategoryBarSelectedOverPadding);
+    }
+
+    void MainMenuLayout::ChangeCategory(const s32 direction) {
+        const auto new_idx = (static_cast<s32>(this->cur_category_idx) + direction + static_cast<s32>(CategoryCount)) % static_cast<s32>(CategoryCount);
+        this->cur_category_idx = static_cast<u32>(new_idx);
+        this->UpdateCategoryBarSelection();
+
+        switch(this->cur_category_idx) {
+            case 1: {
+                pu::audio::PlaySfx(this->open_themes_sfx);
+                ShowThemesMenu();
+                break;
+            }
+            case 2: {
+                pu::audio::PlaySfx(this->open_settings_sfx);
+                ShowSettingsMenu();
+                break;
+            }
+            case 3: {
+                pu::audio::PlaySfx(this->open_controllers_sfx);
+                ShowController();
+                break;
+            }
+            case 4: {
+                pu::audio::PlaySfx(this->open_album_sfx);
+                ShowAlbum();
+                break;
+            }
+            case UserCategoryIndex: {
+                pu::audio::PlaySfx(this->open_user_page_sfx);
+                ShowUserPage();
+                break;
+            }
+            default:
+                // Games (0): stays on this same layout, nothing else to do
+                break;
+        }
     }
 
     void MainMenuLayout::LoadSfx() {
@@ -1097,6 +1186,7 @@ namespace ul::menu::ui {
         UL_RC_ASSERT(acc::GetAccountName(g_GlobalSettings.system_status.selected_user, g_UserName));
         this->entry_menu->Initialize(g_GlobalSettings.system_status.last_menu_index, this->next_reload_user_changed ? g_GlobalSettings.system_status.last_menu_fs_path : "");
         this->quick_menu->UpdateItems();
+        this->category_bar_icons[UserCategoryIndex]->SetImage(GetSelectedUserIconTexture());
         this->next_reload_user_changed = false;
     }
 
