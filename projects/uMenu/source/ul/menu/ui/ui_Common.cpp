@@ -7,6 +7,7 @@
 #include <ul/system/system_Message.hpp>
 #include <ul/menu/smi/smi_Commands.hpp>
 #include <ul/acc/acc_Accounts.hpp>
+#include <unordered_map>
 
 extern ul::menu::ui::GlobalSettings g_GlobalSettings;
 extern ul::menu::ui::MenuApplication::Ref g_MenuApplication;
@@ -281,6 +282,66 @@ namespace ul::menu::ui {
         UL_LOG_INFO("Query application ID %016lX icon (elapsed time: %ld ms)", app_id, elapsed_time_ms);
 
         return pu::sdl2::TextureHandle::New(pu::ui::render::LoadImageFromBuffer(g_TemporaryControlData.icon, icon_size));
+    }
+
+    namespace {
+
+        // Fixed theme icons (Folder/Settings/Themes/...) never change mid-session, but were being
+        // reloaded from disk on every single render of every matching entry - a real cost on lists
+        // with several folders/special entries. Cache them by path instead.
+        pu::sdl2::TextureHandle::Ref GetCachedThemeIcon(const std::string &path_no_ext) {
+            static std::unordered_map<std::string, pu::sdl2::TextureHandle::Ref> s_cache;
+            const auto it = s_cache.find(path_no_ext);
+            if(it != s_cache.end()) {
+                return it->second;
+            }
+            auto tex = TryFindLoadImageHandle(path_no_ext);
+            s_cache.emplace(path_no_ext, tex);
+            return tex;
+        }
+
+    }
+
+    pu::sdl2::TextureHandle::Ref LoadEntryIconTexture(const Entry &entry) {
+        const auto &icon_path = entry.control.icon_path;
+        if(!icon_path.empty()) {
+            return pu::sdl2::TextureHandle::New(pu::ui::render::LoadImageFromFile(icon_path));
+        }
+
+        if(entry.Is<EntryType::Application>()) {
+            return LoadApplicationIconTexture(entry.app_info.app_id);
+        }
+        else if(entry.Is<EntryType::Homebrew>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/DefaultHomebrew");
+        }
+        else if(entry.Is<EntryType::Folder>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/Folder");
+        }
+        else if(entry.Is<EntryType::SpecialEntryMiiEdit>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/MiiEdit");
+        }
+        else if(entry.Is<EntryType::SpecialEntryWebBrowser>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/WebBrowser");
+        }
+        else if(entry.Is<EntryType::SpecialEntryUserPage>()) {
+            return GetSelectedUserIconTexture();
+        }
+        else if(entry.Is<EntryType::SpecialEntrySettings>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/Settings");
+        }
+        else if(entry.Is<EntryType::SpecialEntryThemes>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/Themes");
+        }
+        else if(entry.Is<EntryType::SpecialEntryControllers>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/Controllers");
+        }
+        else if(entry.Is<EntryType::SpecialEntryAlbum>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/Album");
+        }
+        else if(entry.Is<EntryType::SpecialEntryAmiibo>()) {
+            return GetCachedThemeIcon("ui/Main/EntryIcon/Amiibo");
+        }
+        return nullptr;
     }
 
     void RebootSystem() {

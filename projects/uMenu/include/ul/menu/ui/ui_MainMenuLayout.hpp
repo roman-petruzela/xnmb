@@ -6,7 +6,7 @@
 #include <ul/menu/ui/ui_BackgroundScreenCapture.hpp>
 #include <ul/menu/ui/ui_QuickMenu.hpp>
 #include <ul/menu/ui/ui_InputBar.hpp>
-#include <ul/menu/ui/ui_EntryMenu.hpp>
+#include <ul/menu/ui/ui_XmbList.hpp>
 #include <ul/menu/ui/ui_Common.hpp>
 #include <ul/menu/menu_Entries.hpp>
 #include <ul/cfg/cfg_Config.hpp>
@@ -43,7 +43,8 @@ namespace ul::menu::ui {
             pu::ui::elm::TextBlock::Ref battery_text;
             pu::ui::elm::Image::Ref battery_top_icon;
             pu::ui::elm::Image::Ref battery_charging_top_icon;
-            EntryMenu::Ref entry_menu;
+            XmbList::Ref xmb_list;
+            bool last_focused_entry_suspended;
             pu::ui::elm::Image::Ref entry_menu_bg;
             pu::ui::elm::Image::Ref entry_menu_left_icon;
             pu::ui::elm::Image::Ref entry_menu_right_icon;
@@ -95,8 +96,10 @@ namespace ul::menu::ui {
             bool next_reload_user_changed;
 
             void DoMoveTo(const std::string &new_path);
-            void menu_EntryInputPressed(const u64 keys_down);
-            void menu_FocusedEntryChanged(const bool has_prev_entry, const bool is_prev_entry_suspended, const bool is_cur_entry_suspended);
+            void HandleEntryActivated(Entry &entry);
+            void HandleAddNewEntry();
+            void HandleEntryOptions(Entry &entry);
+            void UpdateFocusedEntryDisplay();
 
             void UpdateCategoryBarSelection();
             void ChangeCategory(const s32 direction);
@@ -164,30 +167,21 @@ namespace ul::menu::ui {
                 Entry entry_copy(entry);
                 entry_copy.MoveToParentFolder();
                 pu::audio::PlaySfx(this->entry_move_into_sfx);
-                this->StopSelection();
-                this->entry_menu->NotifyEntryRemoved(entry);
-                this->entry_menu->OrganizeUpdateEntries();
+                this->xmb_list->Reload();
             }
 
             inline void MoveEntryToRoot(const Entry &entry) {
                 Entry entry_copy(entry);
                 entry_copy.MoveToRoot(GetActiveMenuPath());
                 pu::audio::PlaySfx(this->entry_move_into_sfx);
-                this->StopSelection();
-                this->entry_menu->NotifyEntryRemoved(entry);
-                this->entry_menu->OrganizeUpdateEntries();
+                this->xmb_list->Reload();
             }
 
             inline void RemoveEntry(const Entry &entry) {
                 Entry entry_copy(entry);
-                // New entries moved outside if the removed entry is a folder
-                const auto new_entries = entry_copy.Remove();
+                entry_copy.Remove();
                 pu::audio::PlaySfx(this->entry_remove_sfx);
-                for(const auto &new_entry: new_entries) {
-                    this->entry_menu->NotifyEntryAdded(new_entry);
-                }
-                this->entry_menu->NotifyEntryRemoved(entry);
-                this->entry_menu->OrganizeUpdateEntries();
+                this->xmb_list->Reload();
             }
 
             inline void StartResume() {
@@ -195,16 +189,10 @@ namespace ul::menu::ui {
                 RequestResumeScreenCaptureBackground();
             }
 
-            inline void UpdateApplicationVerifyProgress(const u64 app_id, const float progress) {
-                const auto &cur_entries = this->entry_menu->GetEntries();
-                for(u32 i = 0; i < cur_entries.size(); i++) {
-                    const auto &entry = cur_entries.at(i);
-                    if(entry.Is<EntryType::Application>() && (entry.app_info.app_id == app_id)) {
-                        this->entry_menu->UpdateEntryProgress(i, progress);
-                        break;
-                    }
-                }
-            }
+            // TODO: XmbList doesn't render a per-entry progress bar (yet) like the old grid did,
+            // so this is a no-op for now instead of a visual update. Called by MenuApplication's
+            // verify-progress smi message handling, kept so that call site keeps compiling.
+            inline void UpdateApplicationVerifyProgress(const u64 app_id, const float progress) {}
 
             void Initialize();
 
@@ -216,7 +204,6 @@ namespace ul::menu::ui {
 
             void HandleCloseSuspended();
             void HandleHomebrewLaunch(const Entry &entry);
-            void StopSelection();
             void DoTerminateApplication();
     };
 

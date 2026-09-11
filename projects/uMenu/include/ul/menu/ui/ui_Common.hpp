@@ -338,6 +338,9 @@ namespace ul::menu::ui {
 
     pu::sdl2::TextureHandle::Ref LoadApplicationIconTexture(const u64 app_id);
 
+    // Shared by EntryMenu and XmbList so both render entries (application/homebrew/folder/special) consistently
+    pu::sdl2::TextureHandle::Ref LoadEntryIconTexture(const Entry &entry);
+
     void RebootSystem();
     void ShutdownSystem();
     void SleepSystem();
