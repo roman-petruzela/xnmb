@@ -501,11 +501,12 @@ namespace ul::menu::ui {
             }
         }
         // Note: HidNpadButton_ZL | HidNpadButton_ZR together is the quick menu shortcut (see
-        // AddSetInput below), so only act on ZL/ZR here when the other one isn't also held.
-        else if((keys_down & HidNpadButton_ZL) && !(keys_held & HidNpadButton_ZR)) {
+        // AddSetInput below), so only act on ZL/ZR here when the other one isn't also pressed
+        // this same frame (this callback only gets keys_down, not keys_held).
+        else if((keys_down & HidNpadButton_ZL) && !(keys_down & HidNpadButton_ZR)) {
             this->ChangeCategory(-1);
         }
-        else if((keys_down & HidNpadButton_ZR) && !(keys_held & HidNpadButton_ZL)) {
+        else if((keys_down & HidNpadButton_ZR) && !(keys_down & HidNpadButton_ZL)) {
             this->ChangeCategory(1);
         }
     }
