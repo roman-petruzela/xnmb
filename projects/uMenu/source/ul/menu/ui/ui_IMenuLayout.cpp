@@ -136,7 +136,11 @@ namespace ul::menu::ui {
     }
 
     IMenuLayout::IMenuLayout() : Layout(), msg_queue_lock(), msg_queue(), last_has_connection(false), last_connection_strength(0), last_battery_level(0), last_battery_is_charging(false), last_time(), last_date(), time_anim_frame(0), time_anim_dots(true) {
-        this->SetBackgroundImage(GetBackgroundTexture());
+        // PSP XMB-style animated background, shared by every menu layout, drawn behind
+        // everything else (replaces the old static Background.png, now fully covered by it).
+        this->wave_background = WaveBackground::New(0, 0, pu::ui::render::ScreenWidth, pu::ui::render::ScreenHeight);
+        this->Add(this->wave_background);
+
         this->SetOnInput(std::bind(&IMenuLayout::OnLayoutInput, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
         this->AddRenderCallback(std::bind(&IMenuLayout::OnMenuUpdate, this));
 

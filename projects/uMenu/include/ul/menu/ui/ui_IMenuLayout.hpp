@@ -4,6 +4,7 @@
 #include <ul/smi/smi_Protocol.hpp>
 #include <ul/os/os_System.hpp>
 #include <ul/menu/ui/ui_MultiTextBlock.hpp>
+#include <ul/menu/ui/ui_WaveBackground.hpp>
 
 namespace ul::menu::ui {
 
@@ -12,6 +13,7 @@ namespace ul::menu::ui {
             static constexpr u32 TimeDotsAnimStepCount = 60;
 
         private:
+            WaveBackground::Ref wave_background;
             RecursiveMutex msg_queue_lock;
             std::queue<ul::smi::MenuMessageContext> msg_queue;
 
@@ -39,6 +41,10 @@ namespace ul::menu::ui {
 
         public:
             IMenuLayout();
+
+            inline void SetWaveBackgroundColors(const pu::ui::Color base, const pu::ui::Color blob) {
+                this->wave_background->SetColors(base, blob);
+            }
 
             void OnLayoutInput(const u64 keys_down, const u64 keys_up, const u64 keys_held, const pu::ui::TouchPoint touch_pos);
             void NotifyMessageContext(const ul::smi::MenuMessageContext &msg_ctx);

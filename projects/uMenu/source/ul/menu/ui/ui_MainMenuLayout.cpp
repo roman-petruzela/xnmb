@@ -690,10 +690,6 @@ namespace ul::menu::ui {
         this->menu_increment_sfx = nullptr;
         this->menu_decrement_sfx = nullptr;
 
-        // PSP XMB-style animated background, drawn behind absolutely everything else
-        this->wave_background = WaveBackground::New(0, 0, pu::ui::render::ScreenWidth, pu::ui::render::ScreenHeight);
-        this->Add(this->wave_background);
-
         // Load banners first
         this->top_menu_default_bg = pu::ui::elm::Image::New(0, 0, TryFindLoadImageHandle("ui/Main/TopMenuBackground/Default"));
         this->top_menu_folder_bg = pu::ui::elm::Image::New(0, 0, TryFindLoadImageHandle("ui/Main/TopMenuBackground/Folder"));
@@ -850,7 +846,7 @@ namespace ul::menu::ui {
             { 90, 200, 150, 0x40 },
             { 230, 110, 170, 0x40 },
         };
-        this->wave_background->SetColors(CategoryBaseColors[this->cur_category_idx], CategoryBlobColors[this->cur_category_idx]);
+        this->SetWaveBackgroundColors(CategoryBaseColors[this->cur_category_idx], CategoryBlobColors[this->cur_category_idx]);
     }
 
     void MainMenuLayout::ChangeCategory(const s32 direction) {
