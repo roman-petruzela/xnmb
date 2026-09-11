@@ -690,6 +690,10 @@ namespace ul::menu::ui {
         this->menu_increment_sfx = nullptr;
         this->menu_decrement_sfx = nullptr;
 
+        // PSP XMB-style animated background, drawn behind absolutely everything else
+        this->wave_background = WaveBackground::New(0, 0, pu::ui::render::ScreenWidth, pu::ui::render::ScreenHeight);
+        this->Add(this->wave_background);
+
         // Load banners first
         this->top_menu_default_bg = pu::ui::elm::Image::New(0, 0, TryFindLoadImageHandle("ui/Main/TopMenuBackground/Default"));
         this->top_menu_folder_bg = pu::ui::elm::Image::New(0, 0, TryFindLoadImageHandle("ui/Main/TopMenuBackground/Folder"));
@@ -828,6 +832,25 @@ namespace ul::menu::ui {
         const auto &sel_icon = this->category_bar_icons[this->cur_category_idx];
         this->category_bar_selected_over->SetX(sel_icon->GetX() - CategoryBarSelectedOverPadding);
         this->category_bar_selected_over->SetY(sel_icon->GetY() - CategoryBarSelectedOverPadding);
+
+        // Games, Themes, Settings, Controllers, Album, User - each category gets its own tint
+        static constexpr pu::ui::Color CategoryBaseColors[CategoryCount] = {
+            { 6, 109, 208, 0xFF },
+            { 130, 60, 190, 0xFF },
+            { 70, 80, 90, 0xFF },
+            { 200, 110, 20, 0xFF },
+            { 30, 140, 90, 0xFF },
+            { 190, 50, 120, 0xFF },
+        };
+        static constexpr pu::ui::Color CategoryBlobColors[CategoryCount] = {
+            { 0, 148, 255, 0x40 },
+            { 180, 120, 230, 0x40 },
+            { 140, 160, 170, 0x40 },
+            { 240, 160, 60, 0x40 },
+            { 90, 200, 150, 0x40 },
+            { 230, 110, 170, 0x40 },
+        };
+        this->wave_background->SetColors(CategoryBaseColors[this->cur_category_idx], CategoryBlobColors[this->cur_category_idx]);
     }
 
     void MainMenuLayout::ChangeCategory(const s32 direction) {
